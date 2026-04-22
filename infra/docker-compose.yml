@@ -9,4 +9,7 @@ services:
       - "${MACAW_PORT:-3000}:3000"
     volumes:
       - ../data:/app/data
+      - ${HOME}/.pi:/root/.pi:ro
+      - ${HOME}/.claude:/root/.claude:ro
+      - ${HOME}/.codex:/root/.codex:ro
     restart: unless-stopped
