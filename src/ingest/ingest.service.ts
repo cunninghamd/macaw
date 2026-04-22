@@ -46,11 +46,11 @@ export class IngestService implements OnModuleInit {
     this.isIngesting = true;
 
     try {
-      const home = os.homedir();
+      const home = os.homedir().replace(/\\/g, '/');
       const sources = [
-        { name: 'claude', pattern: path.join(home, '.claude', 'projects', '**', '*.jsonl') },
-        { name: 'codex', pattern: path.join(home, '.codex', 'sessions', '**', '*.jsonl') },
-        { name: 'pi', pattern: path.join(home, '.pi', 'agent', 'sessions', '**', '*.jsonl') },
+        { name: 'claude', pattern: `${home}/.claude/projects/**/*.jsonl` },
+        { name: 'codex', pattern: `${home}/.codex/sessions/**/*.jsonl` },
+        { name: 'pi', pattern: `${home}/.pi/agent/sessions/**/*.jsonl` },
       ];
 
       for (const source of sources) {
@@ -257,10 +257,11 @@ export class IngestService implements OnModuleInit {
 
   private cleanProjectPath(cwd: string): string | null {
     if (!cwd || typeof cwd !== 'string') return null;
-    let clean = cwd.endsWith('/') ? cwd.slice(0, -1) : cwd;
+    let clean = cwd.replace(/\\/g, '/');
+    if (clean.endsWith('/')) clean = clean.slice(0, -1);
 
     for (const base of appConfig.basePaths) {
-      let normalized = base;
+      let normalized = base.replace(/\\/g, '/');
       if (!normalized.endsWith('/')) normalized += '/';
       if (clean.startsWith(normalized)) {
         clean = clean.slice(normalized.length);
@@ -314,16 +315,16 @@ export class IngestService implements OnModuleInit {
   private migrateProjectPaths() {
     const db = this.dbService.getDb();
     const sessions = db.prepare('SELECT session_id, source, project_path FROM sessions').all() as any[];
-    const home = os.homedir();
+    const home = os.homedir().replace(/\\/g, '/');
     let updated = 0;
 
     for (const session of sessions) {
       let newPath: string | null = null;
 
       const patterns: Record<string, string> = {
-        claude: path.join(home, '.claude', 'projects', '**', `${session.session_id}.jsonl`),
-        pi: path.join(home, '.pi', 'agent', 'sessions', '**', `${session.session_id}.jsonl`),
-        codex: path.join(home, '.codex', 'sessions', '**', `${session.session_id}.jsonl`),
+        claude: `${home}/.claude/projects/**/${session.session_id}.jsonl`,
+        pi: `${home}/.pi/agent/sessions/**/${session.session_id}.jsonl`,
+        codex: `${home}/.codex/sessions/**/${session.session_id}.jsonl`,
       };
       const pattern = patterns[session.source];
       if (pattern) {
