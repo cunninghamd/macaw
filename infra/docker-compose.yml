@@ -1,0 +1,12 @@
+name: macaw
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "${MACAW_PORT:-3000}:3000"
+    volumes:
+      - ../data:/app/data
+    restart: unless-stopped
